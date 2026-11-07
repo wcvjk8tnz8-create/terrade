@@ -1,0 +1,614 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#fbfaf7">
+<title>v-1.top · TerraDomain</title>
+<meta name="description" content="v-1.top — TerraDomain public subdomain service">
+<style>
+:root{
+  --paper:#fbfaf7;--paper2:#f4f2ec;--card:#fff;--ink:#16191c;--body:#40474f;
+  --muted:#8a8f96;--line:#e4e1d9;--line2:#d8d4ca;--acc:#2e7d5b;--accSoft:#eaf4ee;
+  --blue:#1f6feb;--red:#b8484e;--radius:14px;
+  --serif:"Noto Serif CJK SC","Songti SC","STSong",Georgia,"Times New Roman",serif;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --mono:ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  --ease:cubic-bezier(.22,1,.36,1);--easeSoft:cubic-bezier(.4,0,.2,1);
+  --dur1:160ms;--dur2:280ms;--dur3:420ms;--dur4:620ms;
+}
+@media(prefers-color-scheme:dark){
+  :root{--paper:#101315;--paper2:#171b1e;--card:#171b1e;--ink:#f2f0e9;--body:#c8cdd2;
+    --muted:#858d94;--line:#2b3134;--line2:#3a4246;--acc:#7fd0b4;--accSoft:#182a24;
+    --blue:#8ab4ff;--red:#f3979b}
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{
+  height:100dvh;overflow:hidden;color:var(--ink);background:var(--paper);
+  font-family:var(--sans);-webkit-font-smoothing:antialiased;
+  background-image:radial-gradient(900px 560px at 12% -10%,var(--accSoft),transparent 66%),
+                   radial-gradient(760px 520px at 100% 110%,var(--paper2),transparent 70%);
+}
+a{color:inherit;text-decoration:none}
+.stage{
+  height:100%;display:flex;flex-direction:column;
+  padding:calc(20px + env(safe-area-inset-top)) calc(clamp(20px,5vw,72px) + env(safe-area-inset-right))
+          calc(16px + env(safe-area-inset-bottom)) calc(clamp(20px,5vw,72px) + env(safe-area-inset-left));
+}
+/* ── 顶栏 ── */
+.head{display:flex;align-items:center;gap:24px;border-bottom:1px solid var(--line);padding-bottom:14px;flex-shrink:0}
+.brand{font-family:var(--serif);font-size:26px;font-weight:700;letter-spacing:-.035em;white-space:nowrap}
+.brand i{display:inline-block;width:9px;height:9px;margin-right:10px;border-radius:2px;background:var(--acc);transform:rotate(45deg)}
+.nav{display:flex;gap:24px;margin-left:auto;font-size:13.5px;font-weight:600;color:var(--body)}
+.nav a:hover{color:var(--acc)}
+.lang{display:flex;gap:2px;border:1px solid var(--line2);border-radius:99px;padding:3px;flex-shrink:0}
+.lang button{font:inherit;font-size:12.5px;font-weight:700;color:var(--muted);padding:6px 13px;border-radius:99px;cursor:pointer;background:none;border:0}
+.lang button.on{background:var(--ink);color:var(--paper)}
+/* ── 主体：单屏居中，不上下滑 ── */
+.hero{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:0}
+.eyebrow{font-family:var(--mono);font-size:12.5px;letter-spacing:.28em;color:var(--acc);text-transform:uppercase}
+h1{font-family:var(--serif);font-size:clamp(38px,5.4vw,76px);font-weight:700;letter-spacing:-.055em;line-height:1.14;margin:18px 0 0}
+h1 em{font-style:italic;color:var(--acc)}
+.sub{margin-top:16px;font-size:clamp(14px,1.4vw,18px);line-height:1.7;color:var(--body);max-width:660px}
+/* ── 域名查询框（dnshe.org 式单屏） ── */
+.checker{
+  width:min(100%,860px);margin-top:clamp(24px,3.4vh,40px);display:flex;align-items:stretch;
+  background:var(--card);border:1px solid var(--line2);border-radius:var(--radius);overflow:hidden;
+  box-shadow:0 14px 44px rgba(24,38,30,.06);
+}
+.checker .field{flex:1;min-width:0;display:flex;align-items:center;gap:10px;padding:0 22px}
+.field label{font-family:var(--mono);font-size:12px;letter-spacing:.1em;color:var(--muted);white-space:nowrap}
+.field input{flex:1;min-width:0;height:64px;border:0;outline:0;background:transparent;font:600 19px/1 var(--mono);color:var(--ink)}
+.field input::placeholder{color:var(--muted);font-weight:400}
+.suffix{position:relative;flex-shrink:0;border-left:1px solid var(--line);display:flex;align-items:center}
+.suffix select{appearance:none;border:0;outline:0;background:transparent;color:var(--acc);font:700 17px/1 var(--mono);padding:0 38px 0 22px;height:64px;cursor:pointer}
+.suffix:after{content:"▾";position:absolute;right:16px;color:var(--muted);font-size:13px;pointer-events:none}
+.checker button.check{
+  flex-shrink:0;border:0;cursor:pointer;background:var(--ink);color:var(--paper);
+  padding:0 clamp(20px,3vw,42px);font:700 16px/1 var(--sans);letter-spacing:.01em;
+}
+.checker button.check:hover{background:var(--acc)}
+/* ── 状态条 ── */
+.status{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:10px;margin-top:18px;font-size:13px;color:var(--muted)}
+.pill{border:1px solid var(--line2);border-radius:99px;padding:6px 15px;font-weight:600}
+.pill b{color:var(--acc);font-family:var(--mono)}
+.pill.live{color:var(--acc);border-color:var(--acc)}
+.pill .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--acc);margin-right:8px}
+/* ── 细线指标 ── */
+.metrics{width:min(100%,860px);margin-top:clamp(22px,3.2vh,40px);display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.metric{padding:clamp(12px,2vh,20px) 14px;text-align:left;border-right:1px solid var(--line)}
+.metric:last-child{border-right:0}
+.metric small{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--muted)}
+.metric b{display:block;font-family:var(--serif);font-size:clamp(17px,1.9vw,23px);font-weight:700;margin-top:6px;letter-spacing:-.02em}
+/* ── 合规声明 ── */
+.legal{width:min(100%,860px);margin-top:clamp(14px,2.2vh,26px);font-size:12.5px;line-height:1.75;color:var(--muted);display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:6px 14px}
+.legal a{border-bottom:1px solid var(--line2);color:var(--body);font-weight:600}
+.legal a:hover{color:var(--acc);border-color:var(--acc)}
+/* ── 页脚 ── */
+.foot{flex-shrink:0;border-top:1px solid var(--line);padding-top:12px;display:flex;justify-content:space-between;gap:12px;font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;color:var(--muted)}
+.foot a:hover{color:var(--acc)}
+/* ── 交互：与控制台共用同一组缓动，只动颜色 / 边框 / 阴影 / 滤镜 ── */
+a,.lang button,.nav a,.legal a,.foot a,.checker button.check,.suffix select,.pill{
+  transition:color var(--dur1) var(--easeSoft),background-color var(--dur1) var(--easeSoft),
+             border-color var(--dur1) var(--easeSoft),box-shadow var(--dur2) var(--ease),
+             filter var(--dur2) var(--ease),opacity var(--dur1) var(--easeSoft);
+}
+.checker{transition:box-shadow var(--dur2) var(--ease),border-color var(--dur1) var(--easeSoft)}
+.checker:focus-within{border-color:var(--acc);box-shadow:0 18px 52px rgba(24,38,30,.10)}
+.checker button.check:hover{filter:brightness(1.10)}
+.checker button.check:active{filter:brightness(.94)}
+.lang button:hover{color:var(--ink)}
+.pill.live .dot{animation:tdPulse 2.4s var(--easeSoft) infinite}
+@keyframes tdPulse{0%,100%{opacity:.55}50%{opacity:1}}
+:focus-visible{outline:2px solid var(--acc);outline-offset:3px;border-radius:6px}
+/* ── 入场 ── */
+.rise{animation:rise var(--dur4) var(--ease) both;animation-delay:var(--d,0s)}
+@keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+/* ── 紧凑屏：压缩间距，仍然一屏 ── */
+@media(max-height:760px){
+  h1{margin-top:10px;font-size:clamp(32px,4.4vw,58px)}
+  .sub{margin-top:10px}
+  .checker{margin-top:20px}.field input,.suffix select{height:54px}
+  .metrics{margin-top:18px}.metric{padding:10px 14px}
+  .legal{margin-top:12px}
+}
+@media(max-height:560px) and (orientation:landscape){
+  .stage{padding-top:10px;padding-bottom:8px}
+  .head{padding-bottom:8px}.brand{font-size:20px}.nav{font-size:12px;gap:14px}
+  h1{font-size:34px;margin-top:6px}.sub{margin-top:6px;font-size:13px}
+  .checker{margin-top:12px}.field input,.suffix select{height:44px}
+  .status{margin-top:10px}.metrics{margin-top:12px}.metric{padding:7px 12px}
+  .legal{margin-top:8px;font-size:11px}.foot{padding-top:7px}
+}
+@media(max-width:640px){
+  .nav{display:none}.brand{font-size:21px}
+  .checker{flex-wrap:wrap}.checker .field{width:100%;flex:1 1 100%;border-bottom:1px solid var(--line)}
+  .field input{height:52px}.suffix{flex:1}.suffix select{height:50px;width:100%}
+  .checker button.check{height:50px;padding:0 22px}
+  .metrics{grid-template-columns:repeat(3,1fr)}.metric{text-align:center;padding:10px 5px}
+  .metric b{font-size:14px}.metric small{font-size:9px;letter-spacing:.08em}
+  .legal{font-size:11px}.foot{font-size:10px}
+}
+/* 极矮屏才允许局部滚动，避免内容被切 */
+@media(max-height:430px){body{overflow:auto}.stage{min-height:100dvh;height:auto}}
+@media(max-aspect-ratio:9/19) and (max-width:520px){h1{font-size:clamp(32px,9vw,44px)}}
+@media(prefers-reduced-motion:reduce){
+  .rise{animation:none}
+  *,*::before,*::after{animation-duration:.001ms!important;animation-delay:0ms!important;
+    transition-duration:.001ms!important;transition-delay:0ms!important;scroll-behavior:auto!important}
+}
+</style>
+<style id="td-liquid-glass">
+/* TerraDomain · Liquid Glass（根域名单屏页）
+   只换材质与绿色主题，保留 Zerexa 的衬线标题、等宽小标、细线与单屏布局 */
+:root{
+  --lg-glass:linear-gradient(152deg,rgba(255,255,255,.78) 0%,rgba(255,255,255,.50) 58%,rgba(240,248,242,.46) 100%);
+  --lg-soft:linear-gradient(152deg,rgba(255,255,255,.64),rgba(255,255,255,.36));
+  --lg-stroke:rgba(255,255,255,.90);
+  --lg-blur:blur(30px) saturate(180%);
+  --lg-sh:0 24px 60px rgba(22,62,44,.12),0 4px 14px rgba(22,62,44,.06),inset 0 1px 0 rgba(255,255,255,.9);
+  --lg-sh-sm:0 10px 26px rgba(22,62,44,.08),inset 0 1px 0 rgba(255,255,255,.8);
+  --lg-hair:rgba(31,91,67,.12);
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --lg-glass:linear-gradient(152deg,rgba(34,50,42,.78),rgba(20,32,26,.60) 60%,rgba(16,28,22,.64));
+    --lg-soft:linear-gradient(152deg,rgba(34,50,42,.64),rgba(20,32,26,.42));
+    --lg-stroke:rgba(190,230,205,.16);
+    --lg-sh:0 24px 60px rgba(0,0,0,.48),0 4px 14px rgba(0,0,0,.30),inset 0 1px 0 rgba(255,255,255,.10);
+    --lg-sh-sm:0 10px 26px rgba(0,0,0,.34),inset 0 1px 0 rgba(255,255,255,.08);
+    --lg-hair:rgba(190,230,205,.14);
+  }
+}
+body{
+  background-image:
+    radial-gradient(1000px 620px at 6% -12%,rgba(120,205,160,.30),transparent 64%),
+    radial-gradient(900px 620px at 102% 4%,rgba(186,224,198,.34),transparent 62%),
+    radial-gradient(1100px 780px at 76% 112%,rgba(118,190,152,.24),transparent 66%),
+    linear-gradient(158deg,#fafcf8 0%,#f2f7f0 56%,#edf4ec 100%);
+}
+@media(prefers-color-scheme:dark){
+  body{background-image:
+    radial-gradient(1000px 620px at 6% -12%,rgba(48,120,84,.32),transparent 64%),
+    radial-gradient(900px 620px at 102% 4%,rgba(38,92,68,.30),transparent 62%),
+    radial-gradient(1100px 780px at 76% 112%,rgba(34,96,68,.26),transparent 66%),
+    linear-gradient(158deg,#101a15 0%,#0c1410 56%,#0a120e 100%);}
+}
+.head,.foot{border-color:var(--lg-hair)}
+.lang,.pill{
+  background:var(--lg-soft);border:1px solid var(--lg-stroke);
+  backdrop-filter:var(--lg-blur);-webkit-backdrop-filter:var(--lg-blur);
+  box-shadow:var(--lg-sh-sm);
+}
+.pill.live{border-color:rgba(47,125,91,.40)}
+.checker{
+  background:var(--lg-glass);border:1px solid var(--lg-stroke);
+  border-radius:24px;box-shadow:var(--lg-sh);
+  backdrop-filter:var(--lg-blur);-webkit-backdrop-filter:var(--lg-blur);
+}
+.checker .field{border-bottom-color:var(--lg-hair)}
+.suffix{border-left-color:var(--lg-hair)}
+.checker button.check{
+  background:linear-gradient(150deg,#3d9a6e,#24704f);
+  color:#fff;border-radius:18px;
+  box-shadow:0 12px 26px rgba(36,112,79,.24),inset 0 1px 0 rgba(255,255,255,.30);
+}
+.metrics{
+  background:var(--lg-glass);border:1px solid var(--lg-stroke);
+  border-radius:20px;box-shadow:var(--lg-sh);overflow:hidden;
+  backdrop-filter:var(--lg-blur);-webkit-backdrop-filter:var(--lg-blur);
+}
+.metric{border-right-color:var(--lg-hair)}
+.field input,.suffix select{background:transparent}
+</style>
+</head>
+<body>
+<div class="stage">
+  <header class="head rise" style="--d:.02s">
+    <a class="brand" id="brandLink" href="#"><i></i>TerraDomain</a>
+    <nav class="nav">
+      <a data-go="/whois" data-i18n="navWhois">WHOIS Lookup</a>
+      <a data-go="/terms" data-i18n="navTos">Terms of Service</a>
+      <a data-go="/report" data-i18n="navReport">Report Abuse</a>
+      <a data-go="/dashboard" data-i18n="navConsole">Console</a>
+    </nav>
+    <div class="lang" role="group" aria-label="Language">
+      <button type="button" data-lang="en" class="on">EN</button>
+      <button type="button" data-lang="zh">中</button>
+    </div>
+  </header>
+
+  <main class="hero">
+    <div class="eyebrow rise" style="--d:.06s" data-i18n="eyebrow">FREE PUBLIC SUBDOMAIN · GLOBAL ANYCAST</div>
+    <h1 class="rise" style="--d:.1s"><span data-i18n="h1a">A domain</span> <em data-i18n="h1b">to begin with</em></h1>
+    <p class="sub rise" style="--d:.14s" data-i18n="sub">Check a prefix, pick a root domain, and put your service online in minutes — free of charge.</p>
+
+    <form class="checker rise" style="--d:.18s" id="checker">
+      <div class="field">
+        <label for="prefix">PREFIX</label>
+        <input id="prefix" type="text" maxlength="63" autocomplete="off" spellcheck="false" placeholder="your-name" data-i18n-ph="prefixPh">
+      </div>
+      <div class="suffix">
+        <select id="root" aria-label="Root domain">
+          <option value="meoy.top">.meoy.top</option>
+          <option value="v-1.top">.v-1.top</option>
+        </select>
+      </div>
+      <button class="check" type="submit" data-i18n="checkBtn">Check availability →</button>
+    </form>
+
+    <div class="status rise" style="--d:.22s">
+      <span class="pill"><span data-i18n="rootLabel">Current public domain</span> <b id="curRoot">meoy.top</b></span>
+      <span class="pill live"><span class="dot"></span><span data-i18n="liveLabel">Open for registration</span></span>
+      <span class="pill" id="rootNote" data-i18n="rootNote">AI auto-review · unlimited DNS records</span>
+    </div>
+
+    <div class="metrics rise" style="--d:.26s">
+      <div class="metric"><small>01 / DNS</small><b data-i18n="m1">12 record types</b></div>
+      <div class="metric"><small>02 / NETWORK</small><b data-i18n="m2">Global Anycast</b></div>
+      <div class="metric"><small>03 / PRICE</small><b data-i18n="m3">Free, forever</b></div>
+    </div>
+
+    <div class="legal rise" style="--d:.3s">
+      <span data-i18n="legal">DNS resolution only. Owners are solely responsible for their content.</span>
+      <a id="reportLink" href="#"><span data-i18n="legalReport">Report abuse</span></a>
+      <a id="abuseMail" href="#"><span data-i18n="legalMail">abuse@meoy.top</span></a>
+      <a data-go="/terms" href="#"><span data-i18n="legalTos">Terms</span></a>
+      <a data-go="/register" href="#"><span data-i18n="legalReg">Register →</span></a>
+    </div>
+  </main>
+
+  <footer class="foot rise" style="--d:.34s">
+    <span>© <span id="yr">2026</span> TerraDomain</span>
+    <a id="siteLink" href="#">nic.299282.xyz</a>
+  </footer>
+</div>
+
+<script>
+/* ── 部署配置：只改这两行 ── */
+var PANEL = "https://nic.299282.xyz";   /* 官网 / 控制台地址，不带结尾斜杠 */
+/* 过渡角色提前预热：点链接时图片已在缓存，不会等 760ms 才冒出来 */
+var pl = document.createElement("link"); pl.rel = "preload"; pl.as = "image";
+pl.href = PANEL + "/img/transition/miku-pop.png"; document.head.appendChild(pl);
+var ABUSE_EMAIL = "abuse@v-1.top";     /* 举报邮箱，改成你能收信的地址 */
+var ROOT = "v-1.top";                  /* 本页对应的根域名 */
+/* 跨域拉不到官网 /api/config 时的兜底清单；新增根域名时请同步加进来 */
+var KNOWN_ROOTS = ["meoy.top", "v-1.top"];
+
+var DICT = {
+  en: {
+    navWhois:"WHOIS Lookup",navTos:"Terms of Service",navReport:"Report Abuse",navConsole:"Console",
+    eyebrow:"FREE PUBLIC SUBDOMAIN · GLOBAL ANYCAST",
+    h1a:"A domain",h1b:"to begin with",
+    sub:"Check a prefix, pick a root domain, and put your service online in minutes — free of charge.",
+    prefixPh:"your-name",checkBtn:"Check availability →",
+    rootLabel:"Current public domain",liveLabel:"Open for registration",
+    rootNote:"AI auto-review · unlimited DNS records",
+    m1:"12 record types",m2:"Global Anycast",m3:"Free, forever",
+    legal:"DNS resolution only. Owners are solely responsible for their content.",
+    legalReport:"Report abuse",legalMail:"abuse@" + ROOT,legalTos:"Terms",legalReg:"Register →"
+  },
+  zh: {
+    navWhois:"WHOIS 查询",navTos:"服务条款",navReport:"举报滥用",navConsole:"控制台",
+    eyebrow:"免费公共子域名 · 全球 ANYCAST 解析",
+    h1a:"属于你的",h1b:"专属子域名",
+    sub:"输入前缀、选好根域名，几分钟就能把服务挂上线 —— 完全免费。",
+    prefixPh:"输入前缀",checkBtn:"查询可用性 →",
+    rootLabel:"当前公共域名",liveLabel:"开放注册中",
+    rootNote:"AI 自动审核 · DNS 记录数不限",
+    m1:"12 种记录类型",m2:"全球 Anycast",m3:"永久免费",
+    legal:"本站仅提供 DNS 解析，各子域名的内容与用途由所有者独立负责。",
+    legalReport:"举报滥用",legalMail:"abuse@" + ROOT,legalTos:"服务条款",legalReg:"免费注册 →"
+  }
+};
+
+function fillLinks(){
+  document.getElementById("brandLink").href = PANEL + "/";
+  document.getElementById("siteLink").href = PANEL + "/";
+  document.querySelectorAll("[data-go]").forEach(function(a){
+    a.href = PANEL + a.getAttribute("data-go");
+  });
+  document.getElementById("reportLink").href = PANEL + "/report";
+  document.getElementById("abuseMail").href = "mailto:" + ABUSE_EMAIL;
+  document.getElementById("yr").textContent = new Date().getFullYear();
+  document.getElementById("curRoot").textContent = ROOT;
+  document.getElementById("root").value = ROOT;
+  document.title = ROOT + " · TerraDomain";
+}
+
+function apply(lang){
+  var d = DICT[lang] || DICT.en;
+  document.documentElement.lang = lang === "zh" ? "zh-CN" : "en";
+  document.querySelectorAll("[data-i18n]").forEach(function(el){
+    var v = d[el.getAttribute("data-i18n")]; if (v) el.textContent = v;
+  });
+  var ph = document.querySelector("[data-i18n-ph]");
+  if (ph) ph.placeholder = d.prefixPh;
+  document.querySelectorAll("[data-lang]").forEach(function(b){
+    b.classList.toggle("on", b.getAttribute("data-lang") === lang);
+  });
+  try { localStorage.setItem("td_root_lang", lang); } catch(e){}
+}
+
+/* 查询框：跳到站内 WHOIS，带完整名称与所选根后缀 */
+document.getElementById("checker").addEventListener("submit", function(e){
+  e.preventDefault();
+  var label = document.getElementById("prefix").value.trim().replace(/^https?:\/\//i,"").replace(/\..*$/,"");
+  var root = document.getElementById("root").value;
+  if (!label) { document.getElementById("prefix").focus(); return; }
+});
+
+/* 根域名下拉：优先从控制台 /api/config 拉取全部生效后缀，
+   跨域被拦或接口不可用时回落到内置的两个，保证静态页永远可用。 */
+function loadRoots(){
+  var sel = document.getElementById("root");
+  /* 服务端清单优先（会反映后台「移除根域名」）；
+     只有跨域被拦或接口不可用，才退回 KNOWN_ROOTS，保证静态页永远可选 */
+  var fallback = (typeof KNOWN_ROOTS !== "undefined" && KNOWN_ROOTS.length)
+    ? KNOWN_ROOTS.slice() : [ROOT];
+  function fill(list){
+    list = (list && list.length) ? list.slice() : fallback.slice();
+    if (list.indexOf(ROOT) < 0) list.unshift(ROOT);
+    var seen = {}, out = [];
+    list.forEach(function(d){
+      d = String(d).trim().toLowerCase().replace(/^\.+|\.+$/g,"");
+      if (d && !seen[d]) { seen[d] = 1; out.push(d); }
+    });
+    sel.innerHTML = out.map(function(d){ return '<option value="'+d+'">.'+d+'</option>'; }).join("");
+    sel.value = ROOT;
+  }
+  fill(fallback);
+  try {
+    fetch(PANEL.replace(/\/$/,"") + "/api/config", { headers: { "Accept": "application/json" } })
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(j){
+        var d = j || {};
+        var list = Array.isArray(d.rootDomains) && d.rootDomains.length
+          ? d.rootDomains
+          : (Array.isArray(d.roots) && d.roots.length ? d.roots
+            : (d.rootDomain ? [d.rootDomain] : []));
+        /* 服务端确实给了清单才覆盖；空清单不覆盖，避免「有些域名没加载出来」 */
+        if (list.length) fill(list);
+      })
+      .catch(function(){});
+  } catch(e){}
+}
+
+fillLinks();
+loadRoots();
+var saved = "en";
+try { saved = localStorage.getItem("td_root_lang") || "en"; } catch(e){}
+apply(DICT[saved] ? saved : "en");
+document.querySelectorAll("[data-lang]").forEach(function(b){
+  b.addEventListener("click", function(){ apply(b.getAttribute("data-lang")); });
+});
+</script>
+
+<!-- ══ 切页过渡：Miku 冒出来 + 跳转中气泡（与控制台同一套动作） ══ -->
+<style id="td-trans-style">
+.td-trans {
+  position: fixed; inset: 0; z-index: 99999;
+  display: grid; place-items: center;
+  padding: calc(16px + var(--safe-t, 0px)) 16px calc(16px + var(--safe-b, 0px));
+  background: radial-gradient(120% 90% at 50% 78%, rgba(47, 125, 91, .16), transparent 62%),
+              rgba(238, 246, 241, .58);
+  -webkit-backdrop-filter: blur(16px) saturate(1.15);
+  backdrop-filter: blur(16px) saturate(1.15);
+  opacity: 0; pointer-events: auto;
+  transition: opacity .28s var(--td-ease, cubic-bezier(.22, 1, .36, 1));
+}
+.td-trans[hidden] { display: none !important; }
+.td-trans.is-in { opacity: 1; }
+.td-trans.is-out { opacity: 0; }
+
+.td-trans-panel {
+  --td-miku: clamp(148px, 42vmin, 196px);
+  width: min(360px, calc(100vw - 36px));
+  display: flex; flex-direction: column; align-items: center;
+  padding: 22px 24px 20px;
+  border-radius: 30px;
+  background: rgba(255, 255, 255, .72);
+  border: 1px solid rgba(47, 125, 91, .22);
+  box-shadow: 0 18px 54px rgba(16, 48, 36, .13), inset 0 1px 0 rgba(255, 255, 255, .85);
+  -webkit-backdrop-filter: blur(22px) saturate(1.3);
+  backdrop-filter: blur(22px) saturate(1.3);
+  transform: translateY(10px) scale(.975);
+  opacity: 0;
+  transition: transform .42s var(--td-ease, cubic-bezier(.22, 1, .36, 1)), opacity .3s ease;
+}
+.td-trans.is-in .td-trans-panel { transform: none; opacity: 1; }
+.td-trans.is-out .td-trans-panel { transform: translateY(6px) scale(.985); opacity: 0; }
+
+/* 对话气泡：右上角带小尾巴，指向下面的 Miku */
+.td-trans-bubble {
+  align-self: flex-end;
+  position: relative;
+  display: inline-flex; align-items: center; gap: 9px;
+  margin: 2px 10px -6px 0;
+  padding: 10px 15px;
+  border-radius: 18px 18px 18px 6px;
+  background: rgba(255, 255, 255, .92);
+  border: 1px solid rgba(47, 125, 91, .2);
+  box-shadow: 0 6px 18px rgba(16, 48, 36, .08);
+  color: #174433;
+  font-size: 14px; font-weight: 600; letter-spacing: .02em;
+  opacity: 0; transform: translateY(8px) scale(.92);
+  transition: opacity .34s ease .2s, transform .42s var(--td-ease, cubic-bezier(.22, 1, .36, 1)) .2s;
+}
+.td-trans.is-in .td-trans-bubble { opacity: 1; transform: none; }
+.td-trans-bubble::after {
+  content: ''; position: absolute; left: 14px; bottom: -7px;
+  width: 12px; height: 12px;
+  background: inherit; border-right: 1px solid rgba(47, 125, 91, .2);
+  border-bottom: 1px solid rgba(47, 125, 91, .2);
+  transform: rotate(45deg); border-radius: 0 0 3px 0;
+}
+.td-bubble-dots { display: inline-flex; gap: 3px; align-items: flex-end; height: 10px; }
+.td-bubble-dots i {
+  width: 4px; height: 4px; border-radius: 50%; background: #2f7d5b;
+  animation: td-dot 1.05s ease-in-out infinite;
+}
+.td-bubble-dots i:nth-child(2) { animation-delay: .14s; }
+.td-bubble-dots i:nth-child(3) { animation-delay: .28s; }
+@keyframes td-dot { 0%, 60%, 100% { transform: translateY(0); opacity: .45; } 30% { transform: translateY(-4px); opacity: 1; } }
+
+/* Miku 从面板底部探出来 */
+.td-miku-stage {
+  position: relative;
+  width: var(--td-miku); height: calc(var(--td-miku) * .79);
+  overflow: hidden;
+}
+.td-miku-rise {
+  position: absolute; inset: 0;
+  display: flex; align-items: flex-end; justify-content: center;
+  transform: translateY(112%);
+  will-change: transform;
+}
+.td-trans.is-in .td-miku-rise {
+  animation: td-miku-rise .68s cubic-bezier(.22, 1.26, .36, 1) .06s forwards;
+}
+.td-trans.is-out .td-miku-rise {
+  animation: td-miku-sink .34s cubic-bezier(.4, 0, .8, .4) forwards;
+}
+.td-miku-media {
+  display: block;
+  width: var(--td-miku); height: var(--td-miku);
+  object-fit: contain; object-position: center bottom;
+  transform-origin: 50% 100%;
+  -webkit-user-drag: none; user-select: none;
+  filter: drop-shadow(0 8px 12px rgba(16, 48, 36, .14));
+}
+.td-trans.is-in .td-miku-media {
+  animation: td-miku-breathe 2.8s ease-in-out .76s infinite;
+}
+@keyframes td-miku-rise {
+  0%   { transform: translateY(112%); }
+  72%  { transform: translateY(-5%); }
+  100% { transform: translateY(0); }
+}
+@keyframes td-miku-sink { to { transform: translateY(112%); } }
+@keyframes td-miku-breathe {
+  0%, 100% { transform: translateY(0) rotate(-1deg); }
+  50%      { transform: translateY(-4px) rotate(1.2deg); }
+}
+
+.td-trans-hint {
+  margin-top: 4px; color: rgba(23, 68, 51, .62);
+  font-size: 11.5px; letter-spacing: .1em;
+}
+.td-trans-bar {
+  position: relative; width: 62%; height: 2px; margin-top: 14px;
+  border-radius: 2px; background: rgba(47, 125, 91, .16); overflow: hidden;
+}
+.td-trans-bar span {
+  position: absolute; top: 0; left: 0; width: 42%; height: 100%;
+  border-radius: 2px; background: linear-gradient(90deg, transparent, #2f7d5b, transparent);
+  animation: td-scan 1.35s ease-in-out infinite;
+}
+@keyframes td-scan { 0% { transform: translateX(-110%); } 100% { transform: translateX(250%); } }
+
+[data-theme="dark"] .td-trans {
+  background: radial-gradient(120% 90% at 50% 78%, rgba(47, 125, 91, .2), transparent 62%),
+              rgba(6, 18, 14, .62);
+}
+[data-theme="dark"] .td-trans-panel {
+  background: rgba(18, 38, 30, .78);
+  border-color: rgba(120, 200, 160, .22);
+  box-shadow: 0 18px 54px rgba(0, 0, 0, .38), inset 0 1px 0 rgba(255, 255, 255, .08);
+}
+[data-theme="dark"] .td-trans-bubble {
+  background: rgba(28, 54, 43, .94); border-color: rgba(120, 200, 160, .24);
+  color: #e8f3ec; box-shadow: 0 6px 18px rgba(0, 0, 0, .25);
+}
+[data-theme="dark"] .td-bubble-dots i { background: #8fd3ae; }
+[data-theme="dark"] .td-trans-hint { color: rgba(220, 240, 229, .6); }
+[data-theme="dark"] .td-trans-bar { background: rgba(143, 211, 174, .18); }
+[data-theme="dark"] .td-trans-bar span { background: linear-gradient(90deg, transparent, #8fd3ae, transparent); }
+
+@media (prefers-reduced-motion: reduce) {
+  .td-trans, .td-trans-panel, .td-trans-bubble { transition: opacity .18s linear !important; }
+  .td-trans-panel, .td-trans-bubble { transform: none !important; }
+  .td-miku-rise { transform: none !important; animation: none !important; }
+  .td-miku-media, .td-bubble-dots i, .td-trans-bar span { animation: none !important; }
+  .td-trans.is-out .td-miku-rise { transform: none !important; }
+}
+
+@media (prefers-color-scheme: dark) {
+  .td-trans {
+    background: radial-gradient(120% 90% at 50% 78%, rgba(47,125,91,.2), transparent 62%), rgba(6,18,14,.62);
+  }
+  .td-trans-panel { background: rgba(18,38,30,.78); border-color: rgba(120,200,160,.22);
+    box-shadow: 0 18px 54px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.08); }
+  .td-trans-bubble { background: rgba(28,54,43,.94); border-color: rgba(120,200,160,.24); color: #e8f3ec; }
+  .td-bubble-dots i { background: #8fd3ae; }
+  .td-trans-hint { color: rgba(220,240,229,.6); }
+  .td-trans-bar { background: rgba(143,211,174,.18); }
+  .td-trans-bar span { background: linear-gradient(90deg, transparent, #8fd3ae, transparent); }
+}
+</style>
+<div id="tdTransition" class="td-trans" hidden role="status" aria-live="polite" data-no-i18n>
+  <div class="td-trans-panel">
+    <div class="td-trans-bubble"><span class="td-bubble-text">Heading over</span>
+      <span class="td-bubble-dots"><i></i><i></i><i></i></span></div>
+    <div class="td-miku-stage"><div class="td-miku-rise">
+      <img class="td-miku-media" id="tdMikuImg" alt="" draggable="false">
+    </div></div>
+    <div class="td-trans-hint">Getting things ready</div>
+    <div class="td-trans-bar"><span></span></div>
+  </div>
+</div>
+<script>
+(function(){
+  var el = document.getElementById("tdTransition");
+  var img = document.getElementById("tdMikuImg");
+  img.src = PANEL.replace(/\/$/,"") + "/img/transition/miku-pop.png";
+  var WORDS = {
+    en: { b:"Heading over", h:"Getting things ready" },
+    zh: { b:"跳转中", h:"正在为你准备页面" }
+  };
+  function words(l){ return WORDS[l === "zh" ? "zh" : "en"]; }
+  function setLang(l){
+    var w = words(l);
+    el.querySelector(".td-bubble-text").textContent = w.b;
+    el.querySelector(".td-trans-hint").textContent = w.h;
+  }
+  /* 语言按钮点下后同步气泡（原 apply() 不改 DOM lang 属性，这里直接挂钩） */
+  document.querySelectorAll("[data-lang]").forEach(function(b){
+    b.addEventListener("click", function(){ setLang(b.getAttribute("data-lang")); });
+  });
+  setLang(document.documentElement.lang.indexOf("zh") === 0 ? "zh" : "en");
+
+  var going = false;
+  function go(url){
+    if (going) return; going = true;
+    el.hidden = false;
+    requestAnimationFrame(function(){ requestAnimationFrame(function(){ el.classList.add("is-in"); }); });
+    /* Miku 起手就跳，不再干等 760ms；控制台首屏会识别 referrer 不重播过渡 */
+    setTimeout(function(){ location.href = url; }, 300);
+  }
+  /* 所有指向控制台的链接都走过渡（含品牌、导航、页脚、举报、条款） */
+  document.addEventListener("click", function(e){
+    if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    var a = e.target.closest ? e.target.closest("a[href]") : null;
+    if (!a || a.target === "_blank" || a.hasAttribute("download")) return;
+    var href = a.getAttribute("href") || "";
+    if (href.charAt(0) === "#" || /^(mailto:|tel:)/i.test(href)) return;
+    if (href.indexOf(PANEL.replace(/\/$/,"")) === 0) { e.preventDefault(); go(a.href); }
+  }, true);
+  /* 查询框提交也走过渡 */
+  document.getElementById("checker").addEventListener("submit", function(e){
+    e.preventDefault();
+    var label = document.getElementById("prefix").value.trim().replace(/^https?:\/\//i,"").replace(/\..*$/,"");
+    var root = document.getElementById("root").value;
+    if (!label) { document.getElementById("prefix").focus(); return; }
+    go(PANEL.replace(/\/$/,"") + "/whois?name=" + encodeURIComponent(label + "." + root) + "&root=" + encodeURIComponent(root));
+  }, true);
+  /* 浏览器后退回来时把残留的过渡收掉 */
+  window.addEventListener("pageshow", function(ev){
+    if (ev.persisted) { el.classList.remove("is-in"); el.hidden = true; going = false; }
+  });
+})();
+</script>
+</body>
+</html>
